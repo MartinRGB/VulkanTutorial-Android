@@ -10,6 +10,7 @@
 #define GLM_FORCE_RADIANS
 
 #include <gtc/matrix_transform.hpp>
+#include <ostream>
 
 #include "vulkan_tutorial.h"
 
@@ -31,10 +32,10 @@ const std::vector<const char *> deviceExtensions = {
 };
 
 const std::vector<VulkanTutorialApplication::Vertex> vertices = {
-        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-        {{0.5f,  -0.5f}, {0.0f, 1.0f, 0.0f}},
-        {{0.5f,  0.5f},  {0.0f, 0.0f, 1.0f}},
-        {{-0.5f, 0.5f},  {1.0f, 1.0f, 1.0f}}
+        {{-1.f, -1.f}, {1.0f, 0.0f, 0.0f}},
+        {{1.f,  -1.f}, {0.0f, 1.0f, 0.0f}},
+        {{1.f,  1.f},  {0.0f, 0.0f, 1.0f}},
+        {{-1.f, 1.f},  {1.0f, 1.0f, 1.0f}}
 };
 const std::vector<uint16_t> indices = {
         0, 1, 2, 2, 3, 0
@@ -263,13 +264,20 @@ void VulkanTutorialApplication::initVulkan() {
     createSemaphores();
 }
 
+
+
+
+
 void VulkanTutorialApplication::mainLoop() {
     LOGI("mainLoop start");
 
     while (state != STATE_EXIT) {
         if (state == STATE_RUNNING) {
             updateUniformBuffer();
+
             drawFrame();
+
+
         }
     }
 
@@ -551,7 +559,7 @@ void VulkanTutorialApplication::createDescriptorSetLayout() {
             .binding = 0,
             .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             .descriptorCount = 1,
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
             .pImmutableSamplers = nullptr,
     };
 
@@ -979,7 +987,20 @@ void VulkanTutorialApplication::createSemaphores() {
     }
 }
 
+double clockToMilliseconds(clock_t ticks){
+    // units/(units/time) => time (seconds) * 1000 = milliseconds
+    return (ticks/(double)CLOCKS_PER_SEC)*1000.0;
+}
+//...
+
+clock_t current_ticks, delta_ticks;
+clock_t fps = 0;
+
 void VulkanTutorialApplication::updateUniformBuffer() {
+
+
+    current_ticks = clock();
+
     static auto startTime = std::chrono::high_resolution_clock::now();
 
     auto currentTime = std::chrono::high_resolution_clock::now();
@@ -988,21 +1009,34 @@ void VulkanTutorialApplication::updateUniformBuffer() {
             / 1e3f;
 
     UniformBufferObject ubo = {
-            .model = glm::rotate(glm::mat4(), time * glm::radians(90.0f),
-                                 glm::vec3(0.0f, 0.0f, 1.0f)),
-            .view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f),
-                                glm::vec3(0.0f, 0.0f, 1.0f)),
-            .proj = glm::perspective(glm::radians(45.0f),
-                                     swapchainExtent.width / (float) swapchainExtent.height, 0.1f,
-                                     10.0f),
+//            .model = glm::rotate(glm::mat4(), glm::radians(90.0f),  // .model = glm::rotate(glm::mat4(), time * glm::radians(90.0f),
+//                                 glm::vec3(0.0f, 0.0f, 1.0f)),
+//            .view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+//                                glm::vec3(0.0f, 0.0f, 1.0f)),
+//            .proj = glm::perspective(glm::radians(45.0f),
+//                                     swapchainExtent.width / (float) swapchainExtent.height, 0.1f,
+//                                     10.0f),
+
+            .iGlobalTime = time,
+            .iWidth = 1080.f,
+            .iHeight = 1920.f
+            //.iResolution[1] = 1920.f,
     };
-    ubo.proj[1][1] *= -1;
+    ubo.proj[1][1] *= -1; //ubo.proj[1][1] *= -1;
 
     void *data;
     vkMapMemory(device, uniformBufferMemory, 0, sizeof(ubo), 0, &data);
     memcpy(data, &ubo, sizeof(ubo));
     vkUnmapMemory(device, uniformBufferMemory);
+
+
+
+    delta_ticks = clock() - current_ticks; //the time, in ms, that took to render the scene
+    if(delta_ticks > 0)
+        fps = CLOCKS_PER_SEC / delta_ticks;
+        LOGI("fps: %f",(float)delta_ticks);
 }
+
 
 void VulkanTutorialApplication::drawFrame() {
     uint32_t imageIndex = 0;

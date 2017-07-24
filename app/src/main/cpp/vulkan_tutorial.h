@@ -74,6 +74,10 @@ public:
         glm::mat4 model;
         glm::mat4 view;
         glm::mat4 proj;
+        glm::float32 iGlobalTime;
+        glm::float32 iWidth;
+        glm:: float32 iHeight;
+
     };
 
     VulkanTutorialApplication(

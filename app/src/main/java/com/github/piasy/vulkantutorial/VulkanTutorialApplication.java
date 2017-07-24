@@ -1,6 +1,7 @@
 package com.github.piasy.vulkantutorial;
 
 import android.content.res.AssetManager;
+import android.util.Log;
 import android.view.Surface;
 
 /**

@@ -5,6 +5,9 @@ layout(location = 0) uniform UniformBufferObject {
     mat4 model;
     mat4 view;
     mat4 proj;
+    float iGlobalTime;
+    float iWidth;
+    float iHeight;
 } ubo;
 
 layout(location = 0) in vec2 inPosition;
